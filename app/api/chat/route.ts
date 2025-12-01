@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     let content = "No response received";
     
     if (responseData.output && responseData.output.length > 0) {
-      const messageOutput = responseData.output.find((item: any) => item.type === "message");
+      const messageOutput = responseData.output.find((item: { type: string }) => item.type === "message");
       if (messageOutput && messageOutput.content && messageOutput.content.length > 0) {
         content = messageOutput.content[0].text || messageOutput.content[0].content || content;
       }
