@@ -1,10 +1,4 @@
 import { NextRequest } from "next/server";
-import { modelID } from "@/lib/models";
-
-interface ChatMessage {
-  role: string;
-  content: string;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +13,7 @@ export async function POST(request: NextRequest) {
     // Call your AJ Studios API directly - match your working cURL exactly
     const requestBody = {
       model: selectedModelId || "gpt-4o-mini",
-      messages: messages?.map((msg: any) => ({
+      messages: messages?.map((msg: { role: string; content: unknown; text?: string }) => ({
         role: msg.role,
         content: typeof msg.content === 'string' ? msg.content : 
                 msg.content?.[0]?.text || 
