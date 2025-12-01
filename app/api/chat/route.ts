@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       messages: messages?.map((msg: { role: string; content: unknown; text?: string }) => ({
         role: msg.role,
         content: typeof msg.content === 'string' ? msg.content : 
-                msg.content?.[0]?.text || 
+                (Array.isArray(msg.content) && msg.content[0]?.text) ||
                 msg.text || 
                 JSON.stringify(msg.content) || 
                 "Hello"
