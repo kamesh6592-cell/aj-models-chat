@@ -13,21 +13,26 @@ export async function POST(request: NextRequest) {
 
     console.log("API Request:", { selectedModelId, messageCount: messages.length });
 
-    // Call your AJ Studios API directly - try non-streaming first
+    // Call your AJ Studios API directly - match your working cURL exactly
+    const requestBody = {
+      model: selectedModelId,
+      messages: messages.map((msg) => ({
+        role: msg.role,
+        content: msg.content
+      })),
+      stream: false
+    };
+
+    console.log("Request body:", JSON.stringify(requestBody, null, 2));
+    console.log("API Key:", process.env.AJ_API_KEY ? "Set" : "Not set", process.env.AJ_API_KEY?.substring(0, 10) + "...");
+
     const ajResponse = await fetch("https://api.ajstudioz.dev/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-API-Key": process.env.AJ_API_KEY || "aj-demo123456789abcdef",
       },
-      body: JSON.stringify({
-        model: selectedModelId,
-        messages: messages.map((msg) => ({
-          role: msg.role,
-          content: msg.content
-        })),
-        stream: false
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     console.log("AJ Studios API Response:", {
