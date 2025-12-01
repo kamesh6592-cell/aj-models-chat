@@ -18,7 +18,7 @@ import { Input } from "./input";
 
 export function Chat() {
   const [input, setInput] = useState<string>("");
-  const [selectedModelId, setSelectedModelId] = useState<modelID>("sonnet-3.7");
+  const [selectedModelId, setSelectedModelId] = useState<modelID>("gpt-4o-mini");
   const [isReasoningEnabled, setIsReasoningEnabled] = useState<boolean>(true);
 
   const { messages, sendMessage, status, stop } = useChat({
@@ -80,7 +80,7 @@ export function Chat() {
 
           <div className="absolute bottom-2.5 left-2.5">
             <button
-              disabled={selectedModelId !== "sonnet-3.7"}
+              disabled={!selectedModelId.includes("deepseek-r1")}
               className={cn(
                 "relative w-fit text-sm p-1.5 rounded-lg flex flex-row items-center gap-2 dark:hover:bg-zinc-600 hover:bg-zinc-200 cursor-pointer disabled:opacity-50",
                 {
