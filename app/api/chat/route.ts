@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
-        // Send the response in the format expected by useChat
-        const response = `0:"${content.replace(/"/g, '\\"')}"\n`;
-        controller.enqueue(encoder.encode(response));
+        // Send chunks that useChat expects
+        controller.enqueue(encoder.encode(`2:${JSON.stringify(content)}\n`));
+        controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":${responseData.usage?.input_tokens || 8},"completionTokens":${responseData.usage?.output_tokens || 10}}}\n`));
         controller.close();
       },
     });
