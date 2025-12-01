@@ -18,11 +18,12 @@ export async function POST(request: NextRequest) {
       model: selectedModelId,
       messages: messages.map((msg) => ({
         role: msg.role,
-        content: msg.content
+        content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content) || "Hello"
       })),
       stream: false
     };
 
+    console.log("Original messages:", JSON.stringify(messages, null, 2));
     console.log("Request body:", JSON.stringify(requestBody, null, 2));
     console.log("API Key:", process.env.AJ_API_KEY ? "Set" : "Not set", process.env.AJ_API_KEY?.substring(0, 10) + "...");
 
@@ -53,11 +54,21 @@ export async function POST(request: NextRequest) {
     const responseData = await ajResponse.json();
     console.log("AJ Studios Response Data:", responseData);
 
+    // Extract content from AJ Studios API response format
+    let content = "No response received";
+    
+    if (responseData.output && responseData.output.length > 0) {
+      const messageOutput = responseData.output.find((item: any) => item.type === "message");
+      if (messageOutput && messageOutput.content && messageOutput.content.length > 0) {
+        content = messageOutput.content[0].text || messageOutput.content[0].content || content;
+      }
+    }
+
     // Convert to expected format for the chat interface
     return Response.json({
-      id: Date.now().toString(),
-      role: "assistant",
-      content: responseData.choices?.[0]?.message?.content || responseData.content || "No response received",
+      id: responseData.id || Date.now().toString(),
+      role: "assistant", 
+      content: content,
     });
 
   } catch (error) {
