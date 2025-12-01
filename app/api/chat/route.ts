@@ -13,9 +13,10 @@ export async function POST(request: NextRequest) {
     // Call your AJ Studios API directly - match your working cURL exactly
     const requestBody = {
       model: selectedModelId || "gpt-4o-mini",
-      messages: messages?.map((msg: { role: string; content: unknown; text?: string }) => ({
+      messages: messages?.map((msg: { role: string; content: unknown; text?: string; parts?: Array<{type: string; text: string}> }) => ({
         role: msg.role,
         content: typeof msg.content === 'string' ? msg.content : 
+                (msg.parts && msg.parts[0]?.text) ||  // Extract from parts array
                 (Array.isArray(msg.content) && msg.content[0]?.text) ||
                 msg.text || 
                 JSON.stringify(msg.content) || 
@@ -76,10 +77,22 @@ export async function POST(request: NextRequest) {
     
     console.log("Final extracted content:", content);
 
-    // Return in the format expected by AI SDK useChat hook
-    return new Response(content, {
+    // Return in the streaming format expected by AI SDK useChat hook
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        // Send the response in the format expected by useChat
+        const response = `0:"${content.replace(/"/g, '\\"')}"\n`;
+        controller.enqueue(encoder.encode(response));
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
 
