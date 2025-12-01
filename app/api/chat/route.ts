@@ -60,9 +60,20 @@ export async function POST(request: NextRequest) {
     if (responseData.output && responseData.output.length > 0) {
       const messageOutput = responseData.output.find((item: { type: string }) => item.type === "message");
       if (messageOutput && messageOutput.content && messageOutput.content.length > 0) {
-        content = messageOutput.content[0].text || messageOutput.content[0].content || content;
+        // Log the content structure to understand it better
+        console.log("Message content structure:", JSON.stringify(messageOutput.content, null, 2));
+        
+        const contentItem = messageOutput.content[0];
+        if (contentItem) {
+          // Try different possible content fields
+          content = contentItem.text || 
+                   contentItem.content || 
+                   (typeof contentItem === 'string' ? contentItem : JSON.stringify(contentItem));
+        }
       }
     }
+    
+    console.log("Final extracted content:", content);
 
     // Convert to expected format for the chat interface
     return Response.json({
