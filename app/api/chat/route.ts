@@ -11,7 +11,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { messages, selectedModelId }: { messages: ChatMessage[]; selectedModelId: modelID } = body;
 
-    // Call your AJ Studios API directly
+    console.log("API Request:", { selectedModelId, messageCount: messages.length });
+
+    // Call your AJ Studios API directly - try non-streaming first
     const ajResponse = await fetch("https://api.ajstudioz.dev/api/chat", {
       method: "POST",
       headers: {
@@ -24,25 +26,35 @@ export async function POST(request: NextRequest) {
           role: msg.role,
           content: msg.content
         })),
-        stream: true
+        stream: false
       }),
     });
 
+    console.log("AJ Studios API Response:", {
+      status: ajResponse.status,
+      statusText: ajResponse.statusText,
+      headers: Object.fromEntries(ajResponse.headers.entries())
+    });
+
     if (!ajResponse.ok) {
+      const errorText = await ajResponse.text();
+      console.error("AJ Studios API Error:", errorText);
       return Response.json(
         { error: `AJ Studios API error: ${ajResponse.status} ${ajResponse.statusText}` },
         { status: ajResponse.status }
       );
     }
 
-    // Return the streaming response directly
-    return new Response(ajResponse.body, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-      },
+    const responseData = await ajResponse.json();
+    console.log("AJ Studios Response Data:", responseData);
+
+    // Convert to expected format for the chat interface
+    return Response.json({
+      id: Date.now().toString(),
+      role: "assistant",
+      content: responseData.choices?.[0]?.message?.content || responseData.content || "No response received",
     });
+
   } catch (error) {
     console.error("Chat API error:", error);
     return Response.json(
