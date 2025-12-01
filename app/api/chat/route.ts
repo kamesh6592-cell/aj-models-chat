@@ -9,17 +9,24 @@ interface ChatMessage {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { messages, selectedModelId }: { messages: ChatMessage[]; selectedModelId: modelID } = body;
-
-    console.log("API Request:", { selectedModelId, messageCount: messages.length });
+    console.log("Full request body:", JSON.stringify(body, null, 2));
+    
+    // Handle AI SDK format - extract from the body structure
+    const { messages, selectedModelId } = body;
+    
+    console.log("API Request:", { selectedModelId, messageCount: messages?.length || 0 });
 
     // Call your AJ Studios API directly - match your working cURL exactly
     const requestBody = {
-      model: selectedModelId,
-      messages: messages.map((msg) => ({
+      model: selectedModelId || "gpt-4o-mini",
+      messages: messages?.map((msg: any) => ({
         role: msg.role,
-        content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content) || "Hello"
-      })),
+        content: typeof msg.content === 'string' ? msg.content : 
+                msg.content?.[0]?.text || 
+                msg.text || 
+                JSON.stringify(msg.content) || 
+                "Hello"
+      })) || [{ role: "user", content: "Hello" }],
       stream: false
     };
 
@@ -75,11 +82,11 @@ export async function POST(request: NextRequest) {
     
     console.log("Final extracted content:", content);
 
-    // Convert to expected format for the chat interface
-    return Response.json({
-      id: responseData.id || Date.now().toString(),
-      role: "assistant", 
-      content: content,
+    // Return in the format expected by AI SDK useChat hook
+    return new Response(content, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
     });
 
   } catch (error) {
